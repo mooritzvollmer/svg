@@ -1,0 +1,22 @@
+# SVG Encoder · Moritz Vollmer
+
+> A free browser-based developer tool by Moritz Vollmer for URL-encoding SVG markup and generating CSS background-image data URIs.
+
+## Canonical Page
+
+- https://svg.moritzvollmer.de/
+
+## Function
+
+Users paste SVG markup into the tool. It adds the SVG namespace when necessary, URL-encodes the markup, generates a CSS background-image data URI, displays an isolated preview, and provides copy actions for the generated values.
+
+Processing takes place in the browser. The entered SVG markup is not sent to a server by the application.
+
+## Related Pages
+
+- Portfolio: https://moritzvollmer.de/
+- More projects: https://moritzvollmer.de/projekte/
+
+## Author
+
+- Moritz Vollmer: https://moritzvollmer.de/

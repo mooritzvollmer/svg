@@ -1,0 +1,4 @@
+User-Agent: *
+Allow: /
+
+Sitemap: https://svg.moritzvollmer.de/sitemap.xml
