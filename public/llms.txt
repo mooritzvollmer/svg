@@ -15,7 +15,6 @@ Processing takes place in the browser. The entered SVG markup is not sent to a s
 ## Related Pages
 
 - Portfolio: https://moritzvollmer.de/
-- More projects: https://moritzvollmer.de/projekte/
 
 ## Author
 

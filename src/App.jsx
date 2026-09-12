@@ -209,7 +209,6 @@ function Footer() {
         <nav className="footer-links" aria-label="Footer-Navigation">
           <ul className="footer-links-list">
             <li><a tabIndex="0" className="link" href="https://moritzvollmer.de/" target="_blank" rel="noopener noreferrer">Portfolio</a></li>
-            <li><a tabIndex="0" className="link" href="https://moritzvollmer.de/projekte/" target="_blank" rel="noopener noreferrer">Weitere Projekte</a></li>
             <li><a tabIndex="0" className="link" href="https://barrierefreiheit.moritzvollmer.de" target="_blank" rel="noopener noreferrer">Barrierefreiheit</a></li>
             <li><a tabIndex="0" className="link" href="https://checkliste.moritzvollmer.de" target="_blank" rel="noopener noreferrer">Barrierefreiheit Checkliste</a></li>
             <li><a tabIndex="0" className="link" href="https://farbtool.moritzvollmer.de" target="_blank" rel="noopener noreferrer">Farbkontraste prüfen</a></li>
