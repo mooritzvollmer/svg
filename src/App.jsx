@@ -37,7 +37,7 @@ async function copyValue(value) {
 }
 
 function Logo({ labelled = false }) {
-  return <img src="/brand.svg?v=motif-3" alt={labelled ? 'Moritz Vollmer' : ''} width="40" height="40" style={{display:'block',width:'100%',height:'100%',objectFit:'contain'}} />
+  return <img src="/brand.svg?v=line-4" alt={labelled ? 'Moritz Vollmer' : ''} width="40" height="40" style={{display:'block',width:'100%',height:'100%',objectFit:'contain'}} />
 }
 
 function Header() {
