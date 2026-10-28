@@ -1,221 +1,55 @@
-import { useMemo, useState } from 'react'
+import {useMemo,useRef,useState} from 'react'
 
+const EXAMPLE=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360">
+  <defs>
+    <linearGradient id="band" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ff7148"/>
+      <stop offset="1" stop-color="#e63732"/>
+    </linearGradient>
+  </defs>
+  <path d="M86 180C86 97 160 96 219 156L261 204C320 264 394 263 394 180C394 97 320 96 261 156L219 204C160 264 86 263 86 180Z"
+    fill="none" stroke="url(#band)" stroke-width="56"/>
+  <path d="M177 114L303 246" fill="none" stroke="#20242e" stroke-width="56"/>
+  <circle cx="86" cy="180" r="7" fill="#fcfaf5"/>
+  <circle cx="394" cy="180" r="7" fill="#fcfaf5"/>
+</svg>`
 
-function normalizeSvg(svg) {
-  const trimmedSvg = svg.trim()
+function normalizeSvg(svg){const trimmed=svg.trim();if(!trimmed)return '';if(!trimmed.includes('xmlns='))return trimmed.replace('<svg','<svg xmlns="http://www.w3.org/2000/svg"');return trimmed}
+function encodeSvg(svg){return encodeURIComponent(normalizeSvg(svg)).replace(/'/g,'%27').replace(/"/g,'%22')}
+function decodeSvg(value){try{return decodeURIComponent(value)}catch{return value}}
+function inspectSvg(value){if(!value.trim())return{valid:false,empty:true,label:'Kein SVG geladen',viewBox:''};try{const doc=new DOMParser().parseFromString(value,'image/svg+xml');if(doc.querySelector('parsererror')||doc.documentElement.localName!=='svg'||doc.documentElement.namespaceURI!=='http://www.w3.org/2000/svg')return{valid:false,empty:false,label:'SVG-Code prüfen',viewBox:''};return{valid:true,empty:false,label:'SVG erkannt',viewBox:doc.documentElement.getAttribute('viewBox')||'ohne viewBox'}}catch{return{valid:false,empty:false,label:'SVG-Code prüfen',viewBox:''}}}
+async function copyValue(value){if(navigator.clipboard){try{await navigator.clipboard.writeText(value);return}catch{}}
+ const previous=document.activeElement,field=document.createElement('textarea');field.value=value;field.readOnly=true;field.style.position='fixed';field.style.opacity='0';document.body.append(field);field.select();const copied=document.execCommand('copy');field.remove();previous?.focus();if(!copied)throw Error('Copy failed')}
+const outputOptions=[{id:'css',label:'CSS',title:'SVG als CSS-Hintergrund',field:'cssCode'},{id:'encoded',label:'URL-kodiert',title:'URL-kodiertes SVG',field:'encodedSVG'},{id:'uri',label:'Data-URI',title:'Vollständige Data-URI',field:'dataURI'}]
+const bytes=value=>new TextEncoder().encode(value).length
+const formatBytes=value=>value<1000?value+' B':(value/1000).toLocaleString('de-DE',{maximumFractionDigits:1})+' kB'
 
-  if (!trimmedSvg) return ''
-
-  if (!trimmedSvg.includes('xmlns=')) {
-    return trimmedSvg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"')
-  }
-
-  return trimmedSvg
-}
-
-function encodeSvg(svg) {
-  return encodeURIComponent(normalizeSvg(svg))
-    .replace(/'/g, '%27')
-    .replace(/"/g, '%22')
-}
-
-async function copyValue(value) {
-  if (navigator.clipboard) {
-    await navigator.clipboard.writeText(value)
-    return
-  }
-
-  const textarea = document.createElement('textarea')
-  textarea.value = value
-  textarea.setAttribute('readonly', '')
-  textarea.style.position = 'absolute'
-  textarea.style.left = '-9999px'
-  document.body.append(textarea)
-  textarea.select()
-  document.execCommand('copy')
-  textarea.remove()
-}
-
-function Logo({ labelled = false }) {
-  return <img src="/brand.svg?v=line-4" alt={labelled ? 'Moritz Vollmer' : ''} width="40" height="40" style={{display:'block',width:'100%',height:'100%',objectFit:'contain'}} />
-}
-
-function Header() {
-  return (
-    <header className="centerMaxWidthContainer header">
-      <div className="menu">
-        <div className="centerMaxWidthContainer">
-          <div className="menu-wrapper">
-            <div className="logo">
-              <div className="logo-wrapper">
-                <Logo labelled />
-              </div>
-              <nav aria-label="Breadcrumb Navigation">
-                <ul className="logo-breadcrumb">
-                  <li>
-                    <a tabIndex="0" href="https://moritzvollmer.de/" target="_blank" className="logo-breadcrumb-first" rel="noreferrer author">
-                      Moritz Vollmer
-                    </a>
-                  </li>
-                  <li aria-hidden="true"><span className="logo-breadcrumb-seperator"> // </span></li>
-                  <li>
-                    <span aria-current="page" className="logo-breadcrumb-main">SVGs kodieren</span>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-  )
-}
-
-function HeroTitle() {
-  return (
-    <article className="preContent svg-heading">
-      <h1 lang="en">Scalable Vector Graphics</h1>
-      <h2>SVGs effizient kodieren und einbinden</h2>
-    </article>
-  )
-}
-
-function IntroText() {
-  return (
-    <article className="preContent svg-explainer">
-      <p>
-        SVGs sind skalierbare Vektorgrafiken für das Web. Dieses Tool kodiert deinen SVG-Code als URL-sichere Zeichenkette und erzeugt daraus eine direkt einsetzbare CSS-<code>background-image</code> Data-URI. Füge dein SVG ein, prüfe die Vorschau und kopiere das gewünschte Ergebnis.
-      </p>
-    </article>
-  )
-}
-
-function decodeEncodedSvg(value) {
-  try {
-    return decodeURIComponent(value)
-  } catch {
-    return value
-  }
-}
-
-function SvgTool() {
-  const [svg, setSvg] = useState('')
-  const normalizedSvg = useMemo(() => normalizeSvg(svg), [svg])
-  const encodedSvg = useMemo(() => encodeSvg(svg), [svg])
-  const isSvg = /<svg[\s>]/i.test(normalizedSvg)
-  const dataUri = isSvg ? `data:image/svg+xml,${encodedSvg}` : ''
-  const cssCode = isSvg ? `background-image: url("${dataUri}");` : ''
-
-  return (
-    <main className="mainContent">
-      <section className="cool coolBackgroundDefault centerMaxWidthContainer">
-        <HeroTitle />
-        <div className="container">
-          <fieldset className="svg-input">
-            <legend>
-              <label htmlFor="inputSVG">Gib hier deinen SVG Code ein:</label>
-            </legend>
-            <textarea
-              id="inputSVG"
-              placeholder="Füge deinen SVG Code hier ein..."
-              value={svg}
-              onChange={(event) => setSvg(event.target.value)}
-            />
-          </fieldset>
-
-          <fieldset className="svg-preview">
-            <legend>Vorschau:</legend>
-            <div className="textarea preview" id="preview">
-              {isSvg && (
-                <img className="preview-inline-svg" src={dataUri} alt="Vorschau des eingegebenen SVG" />
-              )}
-            </div>
-          </fieldset>
-
-          <fieldset className="svg-css">
-            <legend>
-              <label htmlFor="cssCode">SVG als CSS Hintergrund:</label>
-            </legend>
-            <textarea
-              id="cssCode"
-              readOnly
-              placeholder="background-image: url('data:image/svg+xml;'"
-              value={cssCode}
-            />
-            <button id="copyCSS" type="button" onClick={() => copyValue(cssCode)}>
-              Code kopieren
-            </button>
-          </fieldset>
-
-          <fieldset className="svg-encode">
-            <legend>
-              <label htmlFor="encodedSVG">SVG URL-kodiert:</label>
-            </legend>
-            <textarea
-              id="encodedSVG"
-              placeholder="Füge dein URL-kodiertes SVG hier ein..."
-              value={encodedSvg}
-              onChange={(event) => setSvg(decodeEncodedSvg(event.target.value))}
-            />
-            <button id="copyEncoded" type="button" onClick={() => copyValue(encodedSvg)}>
-              Code kopieren
-            </button>
-          </fieldset>
-        </div>
-        <IntroText />
-      </section>
-    </main>
-  )
-}
-
-function Footer() {
-  return (
-    <footer className="cool coolBackgroundDefault centerMaxWidthContainer componentPadding">
-      <div className="footer">
-        <div className="logo">
-          <div className="logo-wrapper">
-            <Logo />
-          </div>
-          <nav className="logo-breadcrumb">
-            <ul className="logo-breadcrumb-list">
-              <li>
-                <a tabIndex="0" href="https://moritzvollmer.de/" target="_blank" className="logo-breadcrumb-first" rel="noreferrer author">
-                  Moritz Vollmer
-                </a>
-              </li>
-              <li aria-hidden="true"><span className="logo-breadcrumb-seperator"> // </span></li>
-              <li>
-                <span className="logo-breadcrumb-main">SVGs kodieren</span>
-              </li>
-            </ul>
-          </nav>
-        </div>
-        <nav className="footer-links" aria-label="Footer-Navigation">
-          <ul className="footer-links-list">
-            <li><a tabIndex="0" className="link" href="https://moritzvollmer.de/" target="_blank" rel="noopener noreferrer">Portfolio</a></li>
-            <li><a tabIndex="0" className="link" href="https://barrierefreiheit.moritzvollmer.de" target="_blank" rel="noopener noreferrer">Barrierefreiheit</a></li>
-            <li><a tabIndex="0" className="link" href="https://checkliste.moritzvollmer.de" target="_blank" rel="noopener noreferrer">Barrierefreiheit Checkliste</a></li>
-            <li><a tabIndex="0" className="link" href="https://farbtool.moritzvollmer.de" target="_blank" rel="noopener noreferrer">Farbkontraste prüfen</a></li>
-          </ul>
-        </nav>
-        <nav className="footer-links" aria-label="Rechtliches">
-          <ul className="footer-links-list">
-            <li><a tabIndex="0" className="link" href="https://moritzvollmer.de/impressum/" target="_blank" rel="noopener noreferrer">Impressum</a></li>
-            <li><a tabIndex="0" className="link" href="https://moritzvollmer.de/datenschutz/" target="_blank" rel="noopener noreferrer">Datenschutz</a></li>
-          </ul>
-        </nav>
-        <span className="footer-last">2026 © Moritz Vollmer</span>
-      </div>
-    </footer>
-  )
-}
-
-export default function App() {
-  return (
-    <div className="pageWrapper">
-      <Header />
-      <SvgTool />
-      <Footer />
+export default function App(){
+ const[svg,setSvg]=useState(EXAMPLE),[name,setName]=useState('Beispiel.svg'),[background,setBackground]=useState('grid'),[zoom,setZoom]=useState(100),[active,setActive]=useState('css'),[feedback,setFeedback]=useState(''),[importError,setImportError]=useState(''),[failedPreview,setFailedPreview]=useState('')
+ const sourceRef=useRef(null),linesRef=useRef(null),fileRef=useRef(null),outputRefs=useRef({}),loadVersion=useRef(0)
+ const normalized=useMemo(()=>normalizeSvg(svg),[svg]),encoded=useMemo(()=>encodeSvg(svg),[svg]),inspection=useMemo(()=>inspectSvg(normalized),[normalized]);const dataUri=inspection.valid?'data:image/svg+xml,'+encoded:'',cssCode=inspection.valid?`background-image: url("${dataUri}");`:'';const values={css:cssCode,encoded,uri:dataUri};const current=outputOptions.find(option=>option.id===active)
+ function editSource(value,newName='Eigener Code'){loadVersion.current++;setSvg(value);setName(newName);setFeedback('');setImportError('');setFailedPreview('')}
+ async function importFile(file){if(!file)return;if(file.size>1024*1024){setImportError('Die Datei ist größer als 1 MB. Bitte wähle ein kleineres SVG.');return}if(!/\.svg$/i.test(file.name)&&file.type!=='image/svg+xml'){setImportError('Bitte wähle eine SVG-Datei.');return}const version=++loadVersion.current;try{const text=await file.text();if(version!==loadVersion.current)return;setSvg(text);setName(file.name);setImportError('');setFeedback('');setFailedPreview('')}catch{if(version===loadVersion.current)setImportError('Die Datei konnte nicht gelesen werden. Bitte versuche es erneut.')}finally{if(fileRef.current)fileRef.current.value=''}}
+ async function copyOutput(){try{await copyValue(values[active]);setFeedback(current.label+' kopiert.')}catch{setFeedback('Automatisches Kopieren ist nicht möglich. Du kannst den Code im Ausgabefeld markieren und kopieren.');outputRefs.current[active]?.focus();outputRefs.current[active]?.select()}}
+ function chooseOutput(id){setActive(id);setFeedback('')}
+ function tabKey(event,index){const keys={ArrowRight:(index+1)%3,ArrowLeft:(index+2)%3,Home:0,End:2};if(!(event.key in keys))return;event.preventDefault();const next=outputOptions[keys[event.key]];chooseOutput(next.id);document.getElementById('tab-'+next.id)?.focus()}
+ const previewError=failedPreview===dataUri&&dataUri!==''
+ return <div className="svg-studio">
+  <a className="skip-link" href="#inputSVG">Zum SVG-Code</a>
+  <header className="site-header"><a className="brand" href="https://moritzvollmer.de/" aria-label="Zum Portfolio von Moritz Vollmer"><img src="/brand.svg?v=line-4" width="42" height="42" alt=""/><span>svg<span className="brand-divider">/</span>werkzeug</span></a><a className="portfolio-link" href="https://moritzvollmer.de/">Moritz Vollmer <span aria-hidden="true">↗</span></a></header>
+  <main>
+   <section className="intro" aria-labelledby="page-title"><div><p className="eyebrow">QUELLCODE REIN. CSS RAUS.</p><h1 id="page-title">SVG <span aria-hidden="true">→</span><span className="visually-hidden"> zu </span> CSS<span className="title-dot">.</span></h1></div><p>Füge Dein SVG ein, prüfe die Vorschau und kopiere<br className="desktop-break"/> die passende Ausgabe. Direkt im Browser.</p></section>
+   <section className="workbench" aria-label="SVG bearbeiten und kodieren">
+    <div className="workbench-toolbar"><div className="document-label"><span className="document-dot" aria-hidden="true"></span><span>{name}</span></div><div className="source-actions"><input ref={fileRef} id="svg-file" tabIndex={-1} aria-hidden="true" type="file" accept=".svg,image/svg+xml" className="visually-hidden" onChange={event=>importFile(event.target.files[0])}/><button type="button" onClick={()=>fileRef.current?.click()}>SVG laden <span aria-hidden="true">↗</span></button><button type="button" onClick={()=>editSource(EXAMPLE,'Beispiel.svg')}>Beispiel</button><button type="button" onClick={()=>editSource('','Leeres Dokument')} disabled={!svg}>Leeren <span aria-hidden="true">×</span></button></div></div>
+    {importError&&<p className="import-error" role="alert">{importError}</p>}
+    <div className="editing-grid">
+     <section className="source-panel" aria-labelledby="source-title"><div className="panel-heading"><h2 id="source-title"><label htmlFor="inputSVG">Dein SVG-Code</label></h2><span>01 / INPUT</span></div><div className="editor"><pre ref={linesRef} className="line-numbers" aria-hidden="true">{svg.split('\n').slice(0,1500).map((_,i)=>i+1).join('\n')}</pre><textarea ref={sourceRef} id="inputSVG" value={svg} spellCheck="false" autoComplete="off" autoCapitalize="off" wrap="off" placeholder={'<svg viewBox="0 0 100 100">\n  …\n</svg>'} aria-describedby="source-hint source-status" onChange={event=>editSource(event.target.value)} onScroll={event=>{if(linesRef.current)linesRef.current.scrollTop=event.target.scrollTop}}/></div><div className="source-meta"><span id="source-status" className={!inspection.valid&&!inspection.empty?'invalid':''}><i aria-hidden="true"></i>{inspection.label}</span><span>{formatBytes(bytes(svg))} · {svg.split('\n').length} {svg.split('\n').length===1?'Zeile':'Zeilen'}</span></div><p id="source-hint">{inspection.empty?'Füge SVG-Code ein oder lade eine .svg-Datei.':inspection.valid?'Die Vorschau aktualisiert sich, sobald Du den Code änderst.':'Prüfe öffnende und schließende Tags. Der Code muss ein vollständiges SVG-Element enthalten.'}</p></section>
+     <section className="preview-panel" aria-labelledby="preview-title"><div className="panel-heading"><h2 id="preview-title">Vorschau</h2><span>02 / CANVAS</span></div><div className={'artboard '+background} id="preview"><span className="canvas-corner corner-tl" aria-hidden="true">+</span><span className="canvas-corner corner-tr" aria-hidden="true">+</span><span className="canvas-corner corner-bl" aria-hidden="true">+</span><span className="canvas-corner corner-br" aria-hidden="true">+</span>{dataUri&&!previewError?<img key={dataUri} className="preview-inline-svg" src={dataUri} alt="Vorschau Deines SVG" style={{transform:`scale(${zoom/100})`}} onError={()=>setFailedPreview(dataUri)}/>:<div className="empty-preview"><span aria-hidden="true">&lt;svg&gt;</span><p>{inspection.empty?'Deine Grafik erscheint hier.':previewError?'Dieses SVG lässt sich nicht als Bild darstellen.':'Noch keine gültige SVG-Vorschau.'}</p></div>}</div><div className="canvas-controls"><div className="background-switch" role="group" aria-label="Vorschauhintergrund">{[['grid','Raster'],['light','Hell'],['dark','Dunkel']].map(([id,label])=><button key={id} type="button" aria-pressed={background===id} onClick={()=>setBackground(id)}><i className={'swatch '+id} aria-hidden="true"></i>{label}</button>)}</div><div className="zoom-control" role="group" aria-label="Vorschauzoom"><button type="button" aria-label="Vorschau verkleinern" disabled={zoom<=50} onClick={()=>setZoom(value=>value-25)}>−</button><button className="zoom-reset" type="button" aria-label="Vorschauzoom auf 100 Prozent zurücksetzen" onClick={()=>setZoom(100)}>{zoom}%</button><button type="button" aria-label="Vorschau vergrößern" disabled={zoom>=200} onClick={()=>setZoom(value=>value+25)}>+</button></div></div><div className="canvas-meta"><span>viewBox: {inspection.viewBox||'—'}</span><span>Hintergrund und Zoom ändern nur die Vorschau.</span></div></section>
     </div>
-  )
+    <section className="output-panel" aria-label="Kodierter SVG-Code"><div className="output-heading"><div className="output-tabs" role="tablist" aria-label="Ausgabeformat">{outputOptions.map((option,index)=><button key={option.id} id={'tab-'+option.id} type="button" role="tab" aria-selected={active===option.id} aria-controls={'output-'+option.id} tabIndex={active===option.id?0:-1} onKeyDown={event=>tabKey(event,index)} onClick={()=>chooseOutput(option.id)}>{option.label}</button>)}</div><button className="copy-button" id={active==='encoded'?'copyEncoded':'copyCSS'} type="button" onClick={copyOutput} disabled={!values[active]||!inspection.valid}>{feedback===current.label+' kopiert.'?'Kopiert ✓':'Code kopieren'} <span aria-hidden="true">↗</span></button></div>{outputOptions.map(option=><div key={option.id} id={'output-'+option.id} role="tabpanel" aria-labelledby={'tab-'+option.id} hidden={active!==option.id}><label className="visually-hidden" htmlFor={option.field}>{option.title}</label><textarea id={option.field} ref={node=>{outputRefs.current[option.id]=node}} value={values[option.id]} readOnly={option.id!=='encoded'} wrap="off" spellCheck="false" autoCapitalize="off" onChange={option.id==='encoded'?event=>editSource(decodeSvg(event.target.value)):undefined} placeholder={option.id==='css'?'background-image: url("data:image/svg+xml,…");':'Die Ausgabe erscheint, sobald ein gültiges SVG vorliegt.'}/></div>)}<div className="output-foot"><span>{active==='encoded'?'Auch bearbeitbar: URL-kodierten Code einfügen, um ihn wieder als SVG zu sehen.':active==='css'?'Für die CSS-Eigenschaft background-image.':'Für eine Bildquelle, die eine Data-URI unterstützt.'}</span><span>{formatBytes(bytes(values[active]))}</span></div><p className="copy-feedback" role="status" aria-live="polite">{feedback}</p></section>
+   </section>
+   <section className="explainer" aria-label="Hinweise zur Verwendung"><div><span className="explainer-index">A / EINSETZEN</span><h2>Eine Grafik. Drei Ausgaben.</h2><p>CSS liefert Dir die fertige <code>background-image</code>-Deklaration. „URL-kodiert“ enthält nur den kodierten SVG-Text. Die Data-URI ergänzt den Bildtyp und ist als Bildquelle verwendbar.</p></div><div><span className="explainer-index">B / EINORDNEN</span><h2>Kodiert, nicht optimiert.</h2><p>Der SVG-Inhalt wird URL-sicher kodiert. Das Tool ersetzt keinen Optimierer und bereinigt den Code nicht. Für inhaltlich wichtige Grafiken brauchst Du beim Einbinden weiterhin eine passende Textalternative.</p></div></section>
+  </main>
+  <footer className="site-footer"><a href="https://moritzvollmer.de/" className="footer-brand"><img src="/brand.svg?v=line-4" width="32" height="32" alt=""/>Ein Tool von Moritz Vollmer</a><nav aria-label="Weitere Werkzeuge und Rechtliches"><a href="https://farbtool.moritzvollmer.de/">Farbkontrast</a><a href="https://barrierefreiheit.moritzvollmer.de/">Barrierefreiheit</a><a href="https://moritzvollmer.de/impressum/">Impressum</a><a href="https://moritzvollmer.de/datenschutz/">Datenschutz</a></nav></footer>
+ </div>
 }
