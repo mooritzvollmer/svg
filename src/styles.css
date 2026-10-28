@@ -32,3 +32,14 @@
 @media(min-width:1000px) and (min-height:600px){.site-header{height:49px;min-height:49px}main{padding-top:4px;padding-bottom:3px}.workbench{min-height:0}.panel-heading{min-height:46px;padding:6px 17px}.editor textarea{margin-left:0;width:100%;height:100%;padding:14px 19px;font-size:13px;line-height:1.8}.artboard{padding:8px}.preview-inline-svg{width:78%}.output-panel textarea{height:76px;min-height:76px;padding:13px 17px;font-size:13px;line-height:1.8}.source-panel:has(.invalid) #source-hint{padding:0 17px 8px}.site-footer{height:35px;min-height:35px}.site-footer nav a{min-height:32px}.copy-feedback{padding:8px 17px;font-size:12px;line-height:1.8}}
 @media(max-width:999px){.site-header{min-height:57px}main{padding-top:4px}.editor textarea{padding:17px;font-size:13px}.site-footer{padding:15px 0 20px}.site-footer nav{gap:20px}.panel-heading{padding:10px 15px}.preview-inline-svg{width:78%}}
 @media(max-width:560px){.source-actions{gap:12px}.source-actions>button{font-size:12px;padding:5px 0}.panel-heading{padding:9px 12px;min-height:50px}.panel-heading h2{font-size:13px}.source-more summary,.preview-options summary{font-size:12px;min-height:38px}.editor textarea{padding:14px;font-size:13px}.preview-options-menu{right:-1px;width:253px}.preview-options-menu .background-switch button{padding:8px 7px}.artboard{min-height:275px}.preview-inline-svg{height:250px;width:85%}.output-panel textarea{font-size:13px}.site-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 15px;font-size:12px}.footer-brand{font-size:12px}.site-footer nav{width:auto;gap:15px}.site-footer nav a{min-height:36px}.help-meta{font-size:12px}}
+
+
+/* Feste Chevron-Geometrie statt eines schriftabhaengigen Pfeilzeichens. */
+.source-more>summary,.preview-options>summary{display:flex;align-items:center;gap:9px;line-height:1.25;min-height:36px;padding:8px 0;white-space:nowrap}
+.source-more>summary::marker,.preview-options>summary::marker{content:''}
+.source-more>summary::after,.preview-options>summary::after{content:'';display:block;flex:0 0 7px;width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-2px) rotate(45deg);transform-origin:center}
+.source-more[open]>summary::after,.preview-options[open]>summary::after{transform:translateY(2px) rotate(225deg)}
+.output-heading{min-height:49px}.output-tabs button{font-size:14px;font-weight:600;line-height:1.5;min-height:49px;padding:12px 25px;color:#d4dee8}
+.output-tabs button[aria-selected=true]{background:#354759;color:#fff;box-shadow:inset 0 -3px #ff795b!important}
+.output-tabs button:hover:not([aria-selected=true]){background:#2a3948;color:#fff}.copy-button{min-height:49px;font-size:13px}
+@media(max-width:560px){.output-tabs button{font-size:14px;min-height:49px;padding:12px 10px}.copy-button{min-height:47px;font-size:13px}.source-more>summary,.preview-options>summary{min-height:38px}}
