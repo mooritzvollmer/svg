@@ -43,3 +43,18 @@
 .output-tabs button[aria-selected=true]{background:#354759;color:#fff;box-shadow:inset 0 -3px #ff795b!important}
 .output-tabs button:hover:not([aria-selected=true]){background:#2a3948;color:#fff}.copy-button{min-height:49px;font-size:13px}
 @media(max-width:560px){.output-tabs button{font-size:14px;min-height:49px;padding:12px 10px}.copy-button{min-height:47px;font-size:13px}.source-more>summary,.preview-options>summary{min-height:38px}}
+
+
+/* Native text editing with an inert, escaped XML colour layer. */
+.syntax-editor{display:block;isolation:isolate;overflow:hidden;font:400 13px/1.8 var(--mono)}
+.syntax-editor textarea,.editor-paint pre,.editor-gutter pre{font:400 13px/1.8 var(--mono);letter-spacing:normal;tab-size:2;white-space:pre;text-align:left}
+.syntax-editor textarea{position:relative;z-index:1;width:calc(100% - var(--gutter));margin-left:var(--gutter);padding:14px 19px;border:0;border-radius:0;background:transparent;color:transparent;caret-color:#fff;resize:none;-webkit-text-fill-color:transparent}
+.syntax-editor textarea::placeholder{color:#b5c3d1;-webkit-text-fill-color:#b5c3d1}
+.syntax-editor textarea::selection{background:#5b7da188;color:transparent}
+.editor-paint{position:absolute;inset:0 0 0 var(--gutter);overflow:hidden;pointer-events:none;z-index:0}
+.editor-paint pre{margin:0;padding:14px 19px;width:max-content;min-width:100%;color:#e6ece5;transform-origin:top left}
+.editor-gutter{position:absolute;inset:0 auto 0 0;width:var(--gutter);overflow:hidden;pointer-events:none;user-select:none;background:#19212b;border-right:1px solid #364452;z-index:2}
+.editor-gutter pre{margin:0;padding:14px 10px 14px 0;text-align:right;color:#9baec1}
+.syntax-tag{color:#85cff4}.syntax-attribute{color:#f2ca85}.syntax-value{color:#b3dfa5}.syntax-comment{color:#a7b5c7;font-style:italic}.syntax-entity{color:#f6b5d3}.syntax-cdata{color:#d7b8f5}.syntax-instruction{color:#d7b8f5}
+@media(max-width:999px){.syntax-editor textarea,.editor-paint pre{padding:14px 14px}}
+@media(forced-colors:active){.editor-paint{display:none}.syntax-editor textarea{color:CanvasText;-webkit-text-fill-color:CanvasText;caret-color:CanvasText}.syntax-editor textarea::selection{background:Highlight;color:HighlightText;-webkit-text-fill-color:HighlightText}}
